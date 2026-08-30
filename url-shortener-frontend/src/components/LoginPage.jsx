@@ -2,12 +2,14 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { Link, useNavigate } from "react-router-dom";
-import api from "../api/api";
+import { useAuth } from "../context/AuthContext";
 import FormInput from "./FormInput";
 
 const LoginPage = () => {
   const [loader, setLoader] = useState(false);
   const navigate = useNavigate();
+  const { login } = useAuth();
+
   const {
     register,
     handleSubmit,
@@ -23,11 +25,10 @@ const LoginPage = () => {
 
   const loginHandler = async (data) => {
     setLoader(true);
-    console.log(data);
 
     try {
-      const response = await api.post("/api/auth/login", data);
-      console.log("Login Sucessful: ", response.data);
+      const response = await login(data);
+      console.log(response);
 
       toast.success("Login Sucessful!");
       reset();
