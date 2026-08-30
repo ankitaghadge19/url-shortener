@@ -1,6 +1,8 @@
 package com.url.shrotener.service;
 
 import com.url.shrotener.dto.LoginRequest;
+import com.url.shrotener.dto.LoginResponse;
+import com.url.shrotener.dto.UserResponse;
 import com.url.shrotener.model.User;
 import com.url.shrotener.repository.UserRepository;
 import com.url.shrotener.security.jwt.JwtAuthenticationResponse;
@@ -27,7 +29,7 @@ public class UserService {
         userRepository.save(user);
     }
 
-    public JwtAuthenticationResponse loginUser(LoginRequest loginRequest){
+    public LoginResponse loginUser(LoginRequest loginRequest){
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         loginRequest.getUsername(),
@@ -37,7 +39,13 @@ public class UserService {
         SecurityContextHolder.getContext().setAuthentication(authentication);
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
         String jwt = jwtUtils.generateToken(userDetails);
-        return new JwtAuthenticationResponse(jwt);
+
+        UserResponse userResponse = new UserResponse(
+                userDetails.getId(),
+                userDetails.getUsername(),
+                userDetails.getEmail()
+        );
+        return new LoginResponse(jwt, userResponse);
     }
 
     public User findByUsername(String userName) {
