@@ -2,12 +2,13 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { Link, useNavigate } from "react-router-dom";
-import api from "../api/api";
+import { useAuth } from "../context/AuthContext";
 import FormInput from "./FormInput";
 
 const RegisterPage = () => {
   const [loader, setLoader] = useState(false);
   const navigate = useNavigate();
+  const { registerUser } = useAuth();
   const {
     register,
     handleSubmit,
@@ -28,9 +29,9 @@ const RegisterPage = () => {
     console.log(data);
 
     try {
-      const response = await api.post("/api/auth/register", data);
-      console.log(response);
+      const response = await registerUser(data);
       
+      console.log(response);
       toast.success("Registration Sucessful!");
       reset();
       setTimeout(() => {
