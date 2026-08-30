@@ -1,9 +1,10 @@
 package com.url.shrotener.controller;
 
 import com.url.shrotener.dto.LoginRequest;
+import com.url.shrotener.dto.LoginResponse;
 import com.url.shrotener.dto.RegisterRequest;
+import com.url.shrotener.dto.UserResponse;
 import com.url.shrotener.model.User;
-import com.url.shrotener.security.jwt.JwtAuthenticationResponse;
 import com.url.shrotener.service.UserService;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
@@ -25,11 +26,11 @@ public class AuthController {
     private UserService userService;
 
     @PostMapping("/login")
-    public ResponseEntity<?> loginUser(@RequestBody LoginRequest loginRequest, HttpServletResponse response){
-        JwtAuthenticationResponse jwtResponse = userService.loginUser(loginRequest);
+    public ResponseEntity<UserResponse> loginUser(@RequestBody LoginRequest loginRequest, HttpServletResponse response){
+        LoginResponse loginResponse = userService.loginUser(loginRequest);
         ResponseCookie cookie = ResponseCookie.from(
                 "accessToken",
-                jwtResponse.getToken()
+                loginResponse.getToken()
         )
             .httpOnly(true)
             .secure(false)
@@ -39,7 +40,7 @@ public class AuthController {
             .build();
 
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(loginResponse.getUser());
     }
 
     @PostMapping("/register")
