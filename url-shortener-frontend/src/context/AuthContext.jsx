@@ -37,7 +37,8 @@ export const AuthProvider = ({ children }) => {
   const registerUser = useCallback(async (userData) => {
     const resposne = await api.post("/api/auth/register", userData);
     return resposne.data;
-  });
+  }, []);
+
   // Login
   const login = useCallback(async (credentials) => {
     const response = await api.post("/api/auth/login", credentials);
