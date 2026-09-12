@@ -9,7 +9,7 @@ const Navbar = () => {
       : "text-gray-200 hover:text-white transition-colors duration-200";
   return (
     <nav className="bg-custom-gradient">
-      <div className="px-8 h-16 flex justify-between items-center">
+      <div className="px-8 h-14 flex justify-between items-center">
         {/* Logo */}
         <NavLink
           to="/"
@@ -25,8 +25,8 @@ const Navbar = () => {
             Home
           </NavLink>
 
-          <NavLink to="/login" className={navLinkStyle}>
-            Login
+          <NavLink to="/dashboard" className={navLinkStyle}>
+            Dashboard
           </NavLink>
 
           <NavLink
@@ -51,6 +51,9 @@ const Navbar = () => {
         <div className="flex flex-col gap-4 text-white px-8 pb-4">
           <NavLink to="/" onClick={() => setIsOpen(false)}>
             Home
+          </NavLink>
+          <NavLink to="/dashboard" className={navLinkStyle}>
+            Dashboard
           </NavLink>
           <NavLink to="/login" onClick={() => setIsOpen(false)}>
             Login
