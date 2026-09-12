@@ -33,7 +33,7 @@ const LoginPage = () => {
       toast.success("Login Sucessful!");
       reset();
       setTimeout(() => {
-        navigate("/");
+        navigate("/dashboard");
       }, 1000);
     } catch (error) {
       console.log(error);
