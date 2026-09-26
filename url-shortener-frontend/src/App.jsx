@@ -7,6 +7,7 @@ import LoginPage from "./components/LoginPage";
 import Navbar from "./components/Navbar";
 import RegisterPage from "./components/RegisterPage";
 import DashboardLayout from "./components/Dashboard/DashboardLayout";
+import AnalyticsPage from "./components/AnalyticsPage";
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/dashboard" element={<DashboardLayout />} />
+        <Route path="/analytics/:id" element={<AnalyticsPage />} />
       </Routes>
       <Footer />
     </BrowserRouter>
