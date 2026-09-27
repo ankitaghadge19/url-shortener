@@ -1,8 +1,14 @@
 import { motion } from "motion/react";
 import { FaChartLine, FaFolderOpen, FaLink, FaShieldAlt } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 import FeatureCard from "./FeatureCard";
+import CreateShortUrlModal from "../Dashboard/CreateShortUrlModal";
+import { useState } from "react";
 
-const LandingPage = () => {
+const HomePage = () => {
+  const navigate = useNavigate();
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
   const features = [
     {
       icon: <FaLink />,
@@ -62,10 +68,16 @@ const LandingPage = () => {
             transition={{ duration: 0.6, delay: 0.4 }}
             className="flex gap-4 mt-5"
           >
-            <button className="bg-custom-gradient text-white px-6 py-3 rounded-lg hover:opacity-90 cursor-pointer">
+            <button
+              onClick={() => navigate("/dashboard")}
+              className="bg-custom-gradient text-white px-6 py-3 rounded-lg hover:opacity-90 cursor-pointer"
+            >
               Manage Links
             </button>
-            <button className="border border-btnColor text-btnColor px-4 py-3 rounded-lg hover:bg-blue-50 cursor-pointer">
+            <button
+              onClick={() => setIsCreateModalOpen(true)}
+              className="border border-btnColor text-btnColor px-4 py-3 rounded-lg hover:bg-blue-50 cursor-pointer"
+            >
               Create Short Link
             </button>
           </motion.div>
@@ -81,11 +93,10 @@ const LandingPage = () => {
           <img
             src="/images/triangle.png"
             alt="logo"
-            className="w-[400px] lg:w-[450px]"
+            className="w-100 lg:w-112.5"
           />
         </motion.div>
       </div>
-
       {/* feature cards */}
       <div className="mt-8">
         <h2 className="text-3xl font-bold text-center text-gray-800">
@@ -104,8 +115,13 @@ const LandingPage = () => {
           ))}
         </div>
       </div>
+
+      {/* Create Short URL Modal */}
+      {isCreateModalOpen && (
+        <CreateShortUrlModal onClose={() => setIsCreateModalOpen(false)} />
+      )}
     </div>
   );
 };
 
-export default LandingPage;
+export default HomePage;
