@@ -7,9 +7,11 @@ import {
   FaSearch,
 } from "react-icons/fa";
 
-import { analyticsData, shortUrls } from "../../dummyData/Data";
+import { analyticsData, shortUrls } from "../../data/Data";
+import AnalyticsCard from "./AnalyticsCard";
 import AnalyticsLineChart from "./AnalyticsLineChart";
 import CreateShortUrlModal from "./CreateShortUrlModal";
+import MetricCard from "./MetricCard";
 import ShortUrlCard from "./ShortUrlCard";
 
 const DashboardLayout = () => {
@@ -25,9 +27,13 @@ const DashboardLayout = () => {
     );
   });
 
+  const totalClicks = shortUrls.reduce((total, url) => total + url.clicks, 0);
+
+  const averageClicks = shortUrls.length > 0 ? Math.round(totalClicks / shortUrls.length) : 0;
+
   return (
-    <main className="min-h-screen bg-gray-50 px-4 sm:px-6 lg:px-10 py-8">
-      <div className="max-w-7xl mx-auto">
+    <main className="min-h-screen bg-gray-50 px-3 sm:px-6 lg:px-10 py-8">
+      <div className="max-w-8xl mx-auto">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
           <div>
@@ -63,70 +69,38 @@ const DashboardLayout = () => {
         {/* Summary Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
           {/* Total Short Links */}
-          <div className="bg-white border border-gray-100 rounded-xl shadow-sm p-5">
-            <div className="flex items-center gap-5">
-              <div className="bg-blue-100 w-16 h-16 rounded-xl flex items-center justify-center">
-                <FaLink className="text-blue-600 text-xl" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Total Short Links</p>
-                <h2 className="text-3xl font-bold text-gray-800 mt-2">
-                  {shortUrls.length}
-                </h2>
-              </div>
-            </div>
-          </div>
+          <MetricCard
+            icon={<FaLink />}
+            iconBg={"bg-blue-100"}
+            iconColor={"text-blue-600"}
+            label="Total ShortLinks"
+            value={shortUrls.length}
+          />
 
           {/* Total Clicks */}
-          <div className="bg-white border border-gray-100 rounded-xl shadow-sm p-5">
-            <div className="flex items-center gap-5">
-              <div className="w-16 h-16 bg-green-100 rounded-xl flex items-center justify-center">
-                <FaMousePointer className="text-green-600 text-xl" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Total Clicks</p>
-                <h2 className="text-3xl font-bold text-gray-800 mt-2">
-                  {shortUrls.reduce((total, url) => total + url.clicks, 0)}
-                </h2>
-              </div>
-            </div>
-          </div>
+          <MetricCard
+            icon={<FaMousePointer />}
+            iconBg="bg-green-100"
+            iconColor="text-green-600"
+            label="Total Clicks"
+            value={totalClicks}
+          />
 
           {/* Average Clicks */}
-          <div className="bg-white border border-gray-100 rounded-xl shadow-sm p-5">
-            <div className="flex items-center gap-5">
-              <div className="bg-purple-100 w-16 h-16 rounded-xl flex items-center justify-center">
-                <FaChartLine className="text-purple-600 text-xl" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Avg. Clicks / Link</p>
-                <h2 className="text-3xl font-bold text-gray-800 mt-2">
-                  {shortUrls.length > 0
-                    ? Math.round(
-                        shortUrls.reduce(
-                          (total, url) => total + url.clicks,
-                          0,
-                        ) / shortUrls.length,
-                      )
-                    : 0}
-                </h2>
-              </div>
-            </div>
-          </div>
+          <MetricCard
+            icon={<FaChartLine />}
+            iconBg="bg-purple-100"
+            iconColor="text-purple-600"
+            label="Avg. Clicks / Link"
+            value={averageClicks}
+          />
         </div>
 
         {/* Overall Analytics */}
-        <div className="bg-white border border-gray-100 rounded-xl shadow-sm p-6 mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
-            <div>
-              <h2 className="text-xl font-semibold text-gray-800">
-                Click Analytics
-              </h2>
-            </div>
-          </div>
-          <div className="h-72">
+        <div className="mb-8">
+          <AnalyticsCard title="Click Analytics">
             <AnalyticsLineChart data={analyticsData} />
-          </div>
+          </AnalyticsCard>
         </div>
 
         {/* Short URLs */}
