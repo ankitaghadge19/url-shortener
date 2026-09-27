@@ -1,4 +1,4 @@
-const InputForm = ({
+const FormInput = ({
   label,
   id,
   type = "text",
@@ -59,4 +59,4 @@ const InputForm = ({
   );
 };
 
-export default InputForm;
+export default FormInput;
