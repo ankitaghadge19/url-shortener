@@ -94,7 +94,7 @@ const Navbar = () => {
                 <div className="absolute right-0 top-10 w-48 bg-white border border-gray-200 rounded-md shadow-md overflow-hidden">
                   <div className="px-4 py-3 border-b border-gray-300">
                     <p className="text-lg font-semibold text-gray-800">
-                      {user?.name || "User"}
+                      {user?.username || "User"}
                     </p>
 
                     <p className="text-sm text-gray-500 truncate">
