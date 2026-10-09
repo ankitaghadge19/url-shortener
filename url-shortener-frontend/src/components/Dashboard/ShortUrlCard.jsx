@@ -89,14 +89,14 @@ const ShortUrlCard = ({ url }) => {
           <FaMousePointer className="text-sm text-green-600" />
         </div>
         <div>
-          <p className="font-medium text-gray-800">{url.clicks}</p>
+          <p className="font-medium text-gray-800">{url.clickCount ?? 0}</p>
           <p className="text-sm text-gray-500">Clicks</p>
         </div>
       </div>
 
       {/* Created Date */}
       <div>
-        <p className="font-medium text-gray-700">{url.createdAt}</p>
+        <p className="font-medium text-gray-700">{new Date(url.createdAt).toLocaleString()}</p>
         <p className="text-sm text-gray-500">Created</p>
       </div>
 
