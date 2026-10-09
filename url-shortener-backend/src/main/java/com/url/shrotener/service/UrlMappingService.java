@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -65,18 +66,37 @@ public class UrlMappingService {
                 .entrySet().stream()
                 .map(entry ->{
                     ClickEventDto clickEventDto = new ClickEventDto();
-                    clickEventDto.setClickDate(entry.getKey());
-                    clickEventDto.setCount(entry.getValue());
+                    clickEventDto.setDate(entry.getKey());
+                    clickEventDto.setClicks(entry.getValue());
                     return clickEventDto;
                 }).toList();
     }
 
-    public Map<LocalDate, Long> getTotalClickEventsByUserAndDate(User user, LocalDate startDate, LocalDate endDate) {
+    public List<ClickEventDto> getTotalClickEventsByUserAndDate(User user, LocalDate startDate, LocalDate endDate) {
         List<UrlMapping> urlMappings = urlMappingRepository.findByUser(user);
         List<ClickEvent> clickEvents = clickEventRepository.findByUrlMappingInAndClickDateBetween(
                 urlMappings, startDate.atStartOfDay(), endDate.atTime(LocalTime.MAX));
-        return clickEvents.stream()
-                .collect(Collectors.groupingBy(click -> click.getClickDate().toLocalDate(), Collectors.counting()));
+
+        Map<LocalDate, Long> clickByDate = clickEvents.stream()
+                .collect(Collectors.groupingBy(
+                        click -> click.getClickDate().toLocalDate(),
+                        Collectors.counting()
+                ));
+
+        List<ClickEventDto> dailyClicks = new ArrayList<>();
+        LocalDate currentDate = startDate;
+
+        while(!currentDate.isAfter(endDate)){
+            dailyClicks.add(
+                    new ClickEventDto(
+                            currentDate,
+                            clickByDate.getOrDefault(currentDate, 0L)
+                    )
+            );
+            currentDate = currentDate.plusDays(1);
+        }
+
+        return dailyClicks;
     }
 
 //    1. Finds the original URL from the short URL
