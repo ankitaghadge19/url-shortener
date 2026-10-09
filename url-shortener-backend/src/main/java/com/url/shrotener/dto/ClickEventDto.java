@@ -12,6 +12,6 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ClickEventDto {
-    private LocalDate clickDate;
-    private Long count;
+    private LocalDate date;
+    private Long clicks;
 }
