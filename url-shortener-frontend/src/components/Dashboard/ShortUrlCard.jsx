@@ -8,16 +8,21 @@ import {
 } from "react-icons/fa";
 import { FaChartBar } from "react-icons/fa6";
 import { useNavigate } from "react-router-dom";
+import { getShortUrl } from "../../utils/urlUtils";
 
 const ShortUrlCard = ({ url }) => {
   const [copied, setCopied] = useState(false);
   const navigate = useNavigate();
 
+  // Build the complete short URL using the backend base URL
+  const shortUrl = getShortUrl(url.shortUrl);
+
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(url.shortUrl);
+      await navigator.clipboard.writeText(shortUrl);
       setCopied(true);
       toast.success("Short URL copied!");
+
       setTimeout(() => {
         setCopied(false);
       }, 2000);
@@ -53,12 +58,13 @@ const ShortUrlCard = ({ url }) => {
       </div>
 
       {/* URL Information */}
-      <div className="">
-        <div className="flex items-center gap-2">
+      <div className="min-w-0">
+        <div className="flex items-center gap-2 min-w-0">
           <a
-            href={url.shortUrl}
+            href={shortUrl}
             target="_blank"
-            rel="noreferrer"
+            rel="noopener noreferrer"
+            title={shortUrl}
             className="
               font-semibold
               text-blue-600
@@ -66,17 +72,14 @@ const ShortUrlCard = ({ url }) => {
               truncate
             "
           >
-            {url.shortUrl}
+            {shortUrl}
           </a>
+
           <FaExternalLinkAlt className="text-xs text-blue-600 shrink-0" />
         </div>
+
         <p
-          className="
-            text-sm
-            text-gray-500
-            truncate
-            mt-1
-          "
+          className="text-sm text-gray-500 truncate mt-1"
           title={url.originalUrl}
         >
           {url.originalUrl}
@@ -88,6 +91,7 @@ const ShortUrlCard = ({ url }) => {
         <div className="bg-green-100 h-10 w-10 rounded-full flex items-center justify-center">
           <FaMousePointer className="text-sm text-green-600" />
         </div>
+
         <div>
           <p className="font-medium text-gray-800">{url.clickCount ?? 0}</p>
           <p className="text-sm text-gray-500">Clicks</p>
@@ -96,12 +100,15 @@ const ShortUrlCard = ({ url }) => {
 
       {/* Created Date */}
       <div>
-        <p className="font-medium text-gray-700">{new Date(url.createdAt).toLocaleString()}</p>
+        <p className="font-medium text-gray-700">
+          {url.createdAt ? new Date(url.createdAt).toLocaleString() : "N/A"}
+        </p>
         <p className="text-sm text-gray-500">Created</p>
       </div>
 
       {/* Copy */}
       <button
+        type="button"
         onClick={handleCopy}
         className="
           text-sm
@@ -126,6 +133,7 @@ const ShortUrlCard = ({ url }) => {
 
       {/* Analytics */}
       <button
+        type="button"
         onClick={handleAnalytics}
         className="
           bg-purple-600
