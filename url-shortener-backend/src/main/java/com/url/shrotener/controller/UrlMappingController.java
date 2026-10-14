@@ -64,4 +64,14 @@ public class UrlMappingController {
         );
         return ResponseEntity.ok(dailyClicks);
     }
+
+    // Returns short URL by id owned by authenticated user
+    @GetMapping("/{id}")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<UrlMappingDto> getShortUrlById(@PathVariable Long id, Principal principal){
+        User user = userService.findByUsername(principal.getName());
+
+        UrlMappingDto url = urlMappingService.getUrlByIdAndUser(id, user);
+        return ResponseEntity.ok(url);
+    }
 }

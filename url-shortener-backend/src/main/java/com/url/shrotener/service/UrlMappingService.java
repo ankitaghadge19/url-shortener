@@ -10,7 +10,9 @@ import com.url.shrotener.model.User;
 import com.url.shrotener.repository.ClickEventRepository;
 import com.url.shrotener.repository.UrlMappingRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -116,5 +118,16 @@ public class UrlMappingService {
             clickEventRepository.save(clickEvent);
         }
         return urlMapping;
+    }
+
+    public UrlMappingDto getUrlByIdAndUser(Long id, User user){
+        UrlMapping urlMapping = urlMappingRepository
+                .findByIdAndUser(id, user)
+                .orElseThrow(() ->
+                        new ResponseStatusException(
+                                HttpStatus.NOT_FOUND, "Short URL not found"
+                        )
+                );
+        return urlMappingMapper.convertToDto(urlMapping);
     }
 }
