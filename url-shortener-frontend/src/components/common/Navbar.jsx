@@ -18,28 +18,32 @@ const Navbar = () => {
       : "text-gray-200 hover:text-white transition-colors duration-200";
 
   const handleLogout = async () => {
-    await logout();
-
-    setShowProfile(false);
-    setIsOpen(false);
-
-    navigate("/login");
+    try {
+      await logout();
+    } catch (error) {
+      console.error("Logout request failed:", error);
+    } finally {
+      setShowProfile(false);
+      setIsOpen(false);
+      navigate(
+        "/login",
+        { replace: true }, // Prevents going back to the previous page using the Back button
+      );
+    }
   };
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (profileRef.current &&
-        !profileRef.current.contains(event.target)
-      ) {
+      if (profileRef.current && !profileRef.current.contains(event.target)) {
         setShowProfile(false);
       }
-    }
+    };
 
     document.addEventListener("mousedown", handleClickOutside);
 
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
-    }
+    };
   }, []);
 
   return (
@@ -80,8 +84,7 @@ const Navbar = () => {
               </NavLink>
             </>
           ) : (
-              
-           /* Profile */
+            /* Profile */
             <div ref={profileRef} className="relative">
               <button
                 onClick={() => setShowProfile(!showProfile)}
@@ -126,8 +129,11 @@ const Navbar = () => {
       {/* Mobile Menu */}
       {isOpen && (
         <div className="flex flex-col gap-3 text-white px-8 pb-4">
-          <NavLink to="/" onClick={() => setIsOpen(false)}
-          className={navLinkStyle}>
+          <NavLink
+            to="/"
+            onClick={() => setIsOpen(false)}
+            className={navLinkStyle}
+          >
             Home
           </NavLink>
 
@@ -143,7 +149,11 @@ const Navbar = () => {
 
           {!isAuthenticated && (
             <>
-              <NavLink className={navLinkStyle} to="/login" onClick={() => setIsOpen(false)}>
+              <NavLink
+                className={navLinkStyle}
+                to="/login"
+                onClick={() => setIsOpen(false)}
+              >
                 Login
               </NavLink>
 
