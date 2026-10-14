@@ -6,6 +6,7 @@ import {
   useMemo,
   useState,
 } from "react";
+
 import api from "../api/api";
 
 const AuthContext = createContext(null);
@@ -16,14 +17,17 @@ export const AuthProvider = ({ children }) => {
 
   const isAuthenticated = user !== null;
 
-  // Restore authentication when application starts
+  // Restore the user's session when the application starts
   const checkAuth = useCallback(async () => {
+    setLoading(true);
+
     try {
       const response = await api.get("/api/users/me");
       setUser(response.data);
-      console.log(response.data);
-    } catch {
+      return response.data;
+    } catch (error) {
       setUser(null);
+      return null;
     } finally {
       setLoading(false);
     }
@@ -35,15 +39,15 @@ export const AuthProvider = ({ children }) => {
 
   // Register
   const registerUser = useCallback(async (userData) => {
-    const resposne = await api.post("/api/auth/register", userData);
-    return resposne.data;
+    const response = await api.post("/api/auth/register", userData);
+    return response.data;
   }, []);
 
   // Login
   const login = useCallback(async (credentials) => {
     const response = await api.post("/api/auth/login", credentials);
-
     setUser(response.data);
+
     return response.data;
   }, []);
 
@@ -52,6 +56,7 @@ export const AuthProvider = ({ children }) => {
     try {
       await api.post("/api/auth/logout");
     } finally {
+      // Always clear the frontend authentication state
       setUser(null);
     }
   }, []);
@@ -64,8 +69,9 @@ export const AuthProvider = ({ children }) => {
       login,
       registerUser,
       logout,
+      checkAuth,
     }),
-    [user, isAuthenticated, loading, login, registerUser, logout],
+    [user, isAuthenticated, loading, login, registerUser, logout, checkAuth],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
