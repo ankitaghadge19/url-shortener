@@ -8,6 +8,7 @@ import Navbar from "./components/common/Navbar";
 import RegisterPage from "./components/auth/RegisterPage";
 import DashboardLayout from "./components/Dashboard/DashboardLayout";
 import AnalyticsPage from "./components/dashboard/AnalyticsPage";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
   return (
@@ -15,11 +16,16 @@ function App() {
       <Navbar />
       <Toaster />
       <Routes>
+        {/* Public routes */}
         <Route path="/" element={<HomePage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/dashboard" element={<DashboardLayout />} />
-        <Route path="/analytics/:id" element={<AnalyticsPage />} />
+
+        {/* Protected routes */}
+        <Route element={<ProtectedRoute />}>
+          <Route path="/dashboard" element={<DashboardLayout />} />
+          <Route path="/analytics/:id" element={<AnalyticsPage />} />
+        </Route>
       </Routes>
       <Footer />
     </BrowserRouter>
