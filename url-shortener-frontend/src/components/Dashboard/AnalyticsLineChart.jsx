@@ -19,9 +19,17 @@ ChartJS.register(
   Tooltip,
 );
 
+// Formats a date like "2026-09-28" into "Sep 28" for chart labels
+const formatDate = (date) => {
+  return new Date(`${date}T00:00:00`).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
+};
+
 const AnalyticsLineChart = ({ data }) => {
   const chartData = {
-    labels: data.map((item) => item.date),
+    labels: data.map((item) => formatDate(item.date)),
 
     datasets: [
       {
@@ -68,7 +76,7 @@ const AnalyticsLineChart = ({ data }) => {
         beginAtZero: true,
 
         ticks: {
-          stepSize: 50,
+          stepSize: 1,
         },
 
         title: {
