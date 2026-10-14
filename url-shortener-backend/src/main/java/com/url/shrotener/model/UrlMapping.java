@@ -21,7 +21,7 @@ public class UrlMapping {
     private Long id;
     private String originalUrl;
     private String shortUrl;
-    private int clickCount = 0;
+    private int clickCount = 0; // Increment when short URL is clicked
     private LocalDateTime createdAt;
 
     @ManyToOne
