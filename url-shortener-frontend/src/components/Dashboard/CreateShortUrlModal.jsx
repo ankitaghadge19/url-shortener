@@ -1,40 +1,46 @@
 import { useState } from "react";
 import { FaTimes } from "react-icons/fa";
+import { createShortUrl } from "../../service/urlService";
 
-const CreateShortUrlModal = ({ onClose }) => {
+const CreateShortUrlModal = ({ onClose, onCreated }) => {
   const [originalUrl, setOriginalUrl] = useState("");
   const [isCreated, setIsCreated] = useState(false);
   const [createdUrl, setCreatedUrl] = useState("");
   const [copied, setCopied] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleCreate = (e) => {
+  const handleCreate = async (e) => {
     e.preventDefault();
 
     if (!originalUrl.trim()) {
       return;
     }
 
-    // Dummy shortened URL for now.
-    // Replace this with your backend API later.
-    const alias = "ab8y9PG";
+    try {
+      setIsLoading(true);
 
-    setCreatedUrl(`lynklytics.com/s/${alias}`);
-    setIsCreated(true);
+      const data = await createShortUrl(originalUrl.trim());
+
+      setCreatedUrl(data.shortUrl);
+      setIsCreated(true);
+    } catch (error) {
+      console.error("Failed to create short URL:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleClose = () => {
-    setOriginalUrl("");
-    setIsCreated(false);
-    setCreatedUrl("");
-    setCopied(false);
-
-    onClose();
+  const handleClose = async () => {
+    if (isCreated) {
+      await onCreated();
+    } else {
+      onClose();
+    }
   };
 
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(createdUrl);
-
       setCopied(true);
 
       setTimeout(() => {
@@ -88,7 +94,7 @@ const CreateShortUrlModal = ({ onClose }) => {
         </div>
 
         {!isCreated ? (
-          /* Create Form */
+          /* Create Short URL Form */
           <form onSubmit={handleCreate}>
             <div className="mb-6">
               <label
@@ -101,7 +107,7 @@ const CreateShortUrlModal = ({ onClose }) => {
                   mb-2
                 "
               >
-                Destination URL
+                Original URL
               </label>
 
               <input
@@ -109,7 +115,7 @@ const CreateShortUrlModal = ({ onClose }) => {
                 type="url"
                 value={originalUrl}
                 onChange={(e) => setOriginalUrl(e.target.value)}
-                placeholder="https://example.com/your-long-url"
+                placeholder="https://example.com"
                 required
                 className="
                   w-full
@@ -126,12 +132,11 @@ const CreateShortUrlModal = ({ onClose }) => {
                 "
               />
             </div>
-
             {/* Buttons */}
             <div className="flex justify-end gap-3">
               <button
                 type="button"
-                onClick={handleClose}
+                onClick={onClose}
                 className="
                   px-4
                   py-2.5
@@ -151,6 +156,7 @@ const CreateShortUrlModal = ({ onClose }) => {
 
               <button
                 type="submit"
+                disabled={isLoading}
                 className="
                   px-4
                   py-2.5
@@ -164,7 +170,7 @@ const CreateShortUrlModal = ({ onClose }) => {
                   cursor-pointer
                 "
               >
-                Create Short URL
+                {isLoading ? "Creating..." : "Create Short URL"}
               </button>
             </div>
           </form>
@@ -190,6 +196,7 @@ const CreateShortUrlModal = ({ onClose }) => {
               </div>
 
               <button
+                type="button"
                 onClick={handleCopy}
                 className="
                   px-4
