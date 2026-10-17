@@ -1,5 +1,6 @@
 
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   FaChartLine,
   FaLink,
@@ -10,125 +11,109 @@ import {
 
 import { getTotalClicksByDate } from "../../service/analyticsService";
 import { getAllShortUrls } from "../../service/urlService";
+import { getDateBefore } from "../../utils/analyticsDateUtils";
+
 import AnalyticsCard from "./AnalyticsCard";
 import AnalyticsLineChart from "./AnalyticsLineChart";
 import CreateShortUrlModal from "./CreateShortUrlModal";
 import MetricCard from "./MetricCard";
 import ShortUrlCard from "./ShortUrlCard";
-import { getDateBefore } from "../../utils/analyticsDateUtils";
 
 const DashboardLayout = () => {
+  // Access the shared QueryClient to invalidate cached data when needed.
+  const queryClient = useQueryClient();
+
+  // Store the search input and modal visibility.
   const [searchTerm, setSearchTerm] = useState("");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [shortUrls, setShortUrls] = useState([]);
-  const [analyticsData, setAnalyticsData] = useState([]);
 
-  // Fetch all short URLs for the logged-in user
-  const loadShortUrls = useCallback(async () => {
-    try {
-      const data = await getAllShortUrls();
-      setShortUrls(data);
-    } catch (error) {
-      console.error("Failed to load short URLs:", error);
-    }
-  }, []);
+  // Define the last 30 days, including today.
+  const startDate = getDateBefore(29);
+  const endDate = getDateBefore(0);
 
-  // Fetch click analytics for the last 30 days
-  const loadAnalytics = useCallback(async () => {
-    try {
-      const endDate = new Date().toISOString().split("T")[0];
-      const startDate = getDateBefore(29);
-
-      const data = await getTotalClicksByDate(startDate, endDate);
-      setAnalyticsData(data);
-    } catch (error) {
-      console.error("Failed to load analytics:", error);
-    }
-  }, []);
-
-  // Refresh all dashboard data
-  const loadDashboardData = useCallback(async () => {
-    await Promise.all([loadShortUrls(), loadAnalytics()]);
-  }, [loadShortUrls, loadAnalytics]);
-
-  // Load data on initial render and whenever the tab regains focus
-  useEffect(() => {
-    loadDashboardData();
-
-    const handleFocus = () => {
-      loadDashboardData();
-    };
-
-    window.addEventListener("focus", handleFocus);
-
-    return () => {
-      window.removeEventListener("focus", handleFocus);
-    };
-  }, [loadDashboardData]);
-
-  // Filter short URLs based on the search term
-  const filteredUrls = shortUrls.filter((url) => {
-    const search = searchTerm.toLowerCase();
-
-    return (
-      url.shortUrl.toLowerCase().includes(search) ||
-      url.originalUrl.toLowerCase().includes(search)
-    );
+  // Fetch and cache all short URLs belonging to the logged-in user.
+  const {
+    data: shortUrls = [],
+    isLoading: isUrlsLoading,
+    isError: isUrlsError,
+  } = useQuery({
+    // React Query uses this key to identify the URL list in its cache.
+    queryKey: ["urls"],
+    queryFn: getAllShortUrls,
   });
 
-  // Refresh dashboard after creating a short URL
+  // Fetch and cache overall click analytics for the selected date range.
+  const {
+    data: analyticsData = [],
+    isLoading: isAnalyticsLoading,
+    isError: isAnalyticsError,
+  } = useQuery({
+    // Different date ranges have separate cached analytics.
+    queryKey: ["dailyClicks", startDate, endDate],
+    queryFn: () => getTotalClicksByDate(startDate, endDate),
+  });
+
+  // Refresh dashboard data after a short URL is successfully created.
   const handleShortUrlCreated = async () => {
     setIsCreateModalOpen(false);
-    await loadDashboardData();
+
+    // Mark both queries stale and refetch them if they are active.
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["urls"] }),
+      queryClient.invalidateQueries({ queryKey: ["dailyClicks"] }),
+    ]);
   };
 
-  // Calculate dashboard metrics from the latest URL data
+  // Filter URLs by their short URL or original destination URL.
+  const search = searchTerm.toLowerCase();
+  const filteredUrls = shortUrls.filter(
+    (url) =>
+      url.shortUrl.toLowerCase().includes(search) ||
+      url.originalUrl.toLowerCase().includes(search)
+  );
+
+  // Calculate total clicks across all URLs.
   const totalClicks = shortUrls.reduce(
     (total, url) => total + (url.clickCount || 0),
     0
   );
 
-  const averageClicks =
-    shortUrls.length > 0
-      ? Math.round(totalClicks / shortUrls.length)
-      : 0;
+  // Calculate the average number of clicks per short URL.
+  const averageClicks = shortUrls.length
+    ? Math.round(totalClicks / shortUrls.length)
+    : 0;
 
   return (
-    <main className="min-h-screen bg-gray-50 px-3 sm:px-6 lg:px-10 py-8">
-      <div className="max-w-8xl mx-auto">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+    <main className="min-h-screen bg-gray-50 px-3 py-8 sm:px-6 lg:px-10">
+      <div className="mx-auto max-w-8xl">
+        {/* Dashboard heading and create URL button. */}
+        <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-800">
               Dashboard
             </h1>
-            <p className="text-gray-500 mt-1">
+            <p className="mt-1 text-gray-500">
               Manage your links and track their performance.
             </p>
           </div>
 
           <button
             onClick={() => setIsCreateModalOpen(true)}
-            className="
-              flex items-center justify-center gap-2
-              bg-custom-gradient text-white rounded-lg
-              px-4 py-3 font-medium cursor-pointer
-              hover:opacity-90 transition
-            "
+            className="flex items-center justify-center gap-2 rounded-lg bg-custom-gradient px-4 py-3 font-medium text-white transition hover:opacity-90"
           >
             <FaPlus />
             Create Short URL
           </button>
         </div>
 
-        {/* Summary Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
+        {/* Display summary metrics calculated from the URL list. */}
+        <div className="mb-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
           <MetricCard
             icon={<FaLink />}
             iconBg="bg-blue-100"
             iconColor="text-blue-600"
             label="Total ShortLinks"
-            value={shortUrls.length}
+            value={isUrlsLoading ? "..." : shortUrls.length}
           />
 
           <MetricCard
@@ -136,7 +121,7 @@ const DashboardLayout = () => {
             iconBg="bg-green-100"
             iconColor="text-green-600"
             label="Total Clicks"
-            value={totalClicks}
+            value={isUrlsLoading ? "..." : totalClicks}
           />
 
           <MetricCard
@@ -144,68 +129,72 @@ const DashboardLayout = () => {
             iconBg="bg-purple-100"
             iconColor="text-purple-600"
             label="Avg. Clicks / Link"
-            value={averageClicks}
+            value={isUrlsLoading ? "..." : averageClicks}
           />
         </div>
 
-        {/* Overall Analytics */}
+        {/* Line graph of overall daily clicks of all short urls. */}
         <div className="mb-8">
           <AnalyticsCard title="Click Analytics">
-            <AnalyticsLineChart data={analyticsData} />
+            {isAnalyticsLoading ? (
+              <p className="py-10 text-center text-gray-500">
+                Loading analytics...
+              </p>
+            ) : isAnalyticsError ? (
+              <p className="py-10 text-center text-red-500">
+                Unable to load analytics.
+              </p>
+            ) : (
+              <AnalyticsLineChart data={analyticsData} />
+            )}
           </AnalyticsCard>
         </div>
 
-        {/* Short URLs */}
-        <div className="bg-white border border-gray-100 rounded-xl shadow-sm p-6 mb-8">
-          {/* Header + Search */}
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-5">
-            <div>
-              <h2 className="text-xl font-semibold text-gray-800">
-                Your Short Links
-              </h2>
-            </div>
+        {/* Display the user's short URLs and search controls. */}
+        <div className="mb-8 rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+          <div className="mb-5 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <h2 className="text-xl font-semibold text-gray-800">
+              Your Short Links
+            </h2>
 
-            {/* Search */}
+            {/* Update the search term as the user types. */}
             <div className="relative w-full md:w-80">
-              <FaSearch
-                className="
-                  absolute left-3 top-1/2 -translate-y-1/2
-                  text-gray-400
-                "
-              />
+              <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
 
               <input
                 type="text"
                 placeholder="Search your links..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="
-                  border border-gray-200 bg-white w-full
-                  rounded-lg py-2.5 pl-10 pr-3 outline-none
-                  focus:border-blue-400 focus:ring-2 focus:ring-blue-100
-                "
+                onChange={(event) => setSearchTerm(event.target.value)}
+                className="w-full rounded-lg border border-gray-200 bg-white py-2.5 pl-10 pr-3 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
               />
             </div>
           </div>
 
-          {/* Scrollable URL List */}
-          <div className="max-h-125 overflow-y-auto space-y-3 pr-1">
-            {filteredUrls.length > 0 ? (
+          {/* Show the filtered URLs. */}
+          <div className="max-h-125 space-y-3 overflow-y-auto pr-1">
+            {isUrlsLoading ? (
+              <p className="py-10 text-center text-gray-500">
+                Loading your short links...
+              </p>
+            ) : isUrlsError ? (
+              <p className="py-10 text-center text-red-500">
+                Unable to load your short links.
+              </p>
+            ) : filteredUrls.length > 0 ? (
               filteredUrls.map((url) => (
                 <ShortUrlCard key={url.id} url={url} />
               ))
             ) : (
-              <div className="py-10 text-center">
-                <p className="text-gray-500">
-                  No short links found.
-                </p>
-              </div>
+              <p className="py-10 text-center text-gray-500">
+                No short links found.
+              </p>
             )}
           </div>
         </div>
       </div>
 
-      {/* Create Short URL Modal */}
+      {/* Render the create URL modal only while it is open. */}
       {isCreateModalOpen && (
         <CreateShortUrlModal
           onClose={() => setIsCreateModalOpen(false)}
