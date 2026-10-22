@@ -11,27 +11,34 @@ import { useNavigate } from "react-router-dom";
 import { getShortUrl } from "../../utils/urlUtils";
 
 const ShortUrlCard = ({ url }) => {
+  // Track whether the short URL has been copied to provide button feedback.
   const [copied, setCopied] = useState(false);
+
+  // Navigate to the analytics page for the selected URL.
   const navigate = useNavigate();
 
+  // Convert the stored short URL into its complete, usable URL.
   const shortUrl = getShortUrl(url.shortUrl);
 
-  // Copy the short URL to the clipboard.
+  // Copy the short URL to the clipboard and notify the user of the result.
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(shortUrl);
+
       setCopied(true);
       toast.success("Short URL copied!");
 
+      // Reset the button label after briefly showing the copied state.
       setTimeout(() => setCopied(false), 2000);
     } catch {
+      // Notify the user if clipboard access or copying fails.
       toast.error("Unable to copy URL");
     }
   };
 
-  // Open analytics for this short URL.
+  // Open the analytics page associated with this short URL's ID.
   const handleAnalytics = () => {
-    navigate(`/analytics/${url.id}`);
+    void navigate(`/analytics/${url.id}`);
   };
 
   return (
@@ -44,12 +51,12 @@ const ShortUrlCard = ({ url }) => {
         bg-white px-4 py-3 shadow-sm
       "
     >
-      {/* Link Icon */}
+      {/* Display the link icon on large screens. */}
       <div className="hidden h-10 w-10 items-center justify-center rounded-full bg-blue-100 lg:flex">
         <FaLink className="text-blue-600" />
       </div>
 
-      {/* URL Information */}
+      {/* Display the short URL and its original destination. */}
       <div className="min-w-0">
         <div className="flex min-w-0 items-center gap-2">
           <a
@@ -72,7 +79,7 @@ const ShortUrlCard = ({ url }) => {
           {url.originalUrl}
         </p>
 
-        {/* Clicks and date on small screens */}
+        {/* Show click count and creation date on small screens. */}
         <div className="mt-3 flex flex-wrap items-center gap-x-4 text-sm text-gray-500 lg:hidden">
           <span>{url.clickCount ?? 0} clicks</span>
           <span>•</span>
@@ -84,7 +91,7 @@ const ShortUrlCard = ({ url }) => {
         </div>
       </div>
 
-      {/* Clicks on large screens */}
+      {/* Display the click count on large screens. */}
       <div className="hidden items-center gap-3 lg:flex">
         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100">
           <FaMousePointer className="text-sm text-green-600" />
@@ -96,7 +103,7 @@ const ShortUrlCard = ({ url }) => {
         </div>
       </div>
 
-      {/* Created Date on large screens */}
+      {/* Display the creation date on large screens. */}
       <div className="hidden lg:block">
         <p className="font-medium text-gray-700">
           {url.createdAt ? new Date(url.createdAt).toLocaleString() : "N/A"}
@@ -104,7 +111,7 @@ const ShortUrlCard = ({ url }) => {
         <p className="text-sm text-gray-500">Created</p>
       </div>
 
-      {/* Action Buttons */}
+      {/* Provide actions to copy the short URL or view its analytics. */}
       <div className="flex flex-wrap items-center gap-2">
         <button
           type="button"
