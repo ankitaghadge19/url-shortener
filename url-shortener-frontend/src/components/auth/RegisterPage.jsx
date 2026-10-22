@@ -6,41 +6,57 @@ import { useAuth } from "../../context/AuthContext";
 import FormInput from "./FormInput";
 
 const RegisterPage = () => {
+  // Tracks whether registration is in progress to prevent repeated submissions.
   const [loader, setLoader] = useState(false);
+
+  // Allows navigation to the login page after successful registration.
   const navigate = useNavigate();
+
+  // Access the registration function from the authentication context.
   const { registerUser } = useAuth();
+
+  // Initialize React Hook Form to manage input values, validation, and errors.
   const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors },
+    register, // Connects input fields to React Hook Form.
+    handleSubmit, // Validates the form before calling the registration handler.
+    reset, // Resets all fields to their default values.
+    formState: { errors }, // Stores validation errors for individual fields.
   } = useForm({
+    // Set the initial values of the registration form.
     defaultValues: {
       username: "",
       email: "",
-      role: ["ROLE_USER"],
       password: "",
     },
+
+    // Validate fields when first touched and on subsequent changes.
     mode: "onTouched",
   });
 
+  // Handles form submission after client-side validation succeeds.
   const registerHandler = async (data) => {
+    // Show the loading state while the registration request is running.
     setLoader(true);
-    console.log(data);
 
     try {
-      const response = await registerUser(data);
+      // Submit the user's details to the registration logic in AuthContext.
+      await registerUser(data);
 
-      console.log(response);
-      toast.success("Registration Sucessful!");
+      // Notify the user that registration was successful.
+      toast.success("Registration Successful!");
+
+      // Clear the form after successful registration.
       reset();
+
+      // Delay navigation briefly so the success notification is visible.
       setTimeout(() => {
-        navigate("/login");
+        void navigate("/login");
       }, 1000);
-    } catch (error) {
-      console.log(error);
-      toast.error("Registration Failed!");
+    } catch {
+      // Display a user-friendly message if registration fails.
+      toast.error("Unable to register. Check your details and try again.");
     } finally {
+      // Always clear the loading state, whether registration succeeds or fails.
       setLoader(false);
     }
   };
@@ -48,16 +64,17 @@ const RegisterPage = () => {
   return (
     <div className="min-h-[calc(100vh-60px)] flex justify-center items-center">
       <form
+        // Validate the form before executing registerHandler.
         onSubmit={handleSubmit(registerHandler)}
-        className="w-full max-w-[450px] shadow-custom py-8 px-6 sm:px-8 rounded-md"
+        className="w-full max-w-112.5 shadow-custom py-8 px-6 sm:px-8 rounded-md"
       >
-        {/* Heading */}
+        {/* Registration form heading */}
         <h1 className="text-center text-btnColor font-bold text-2xl lg:text-3xl">
           Register Here
         </h1>
         <hr className="mt-2 mb-5 border-slate-300" />
 
-        {/* Input Fields */}
+        {/* Reusable input fields with field-specific validation */}
         <div className="flex flex-col gap-4">
           <FormInput
             label="Username"
@@ -94,7 +111,7 @@ const RegisterPage = () => {
           />
         </div>
 
-        {/* Register Button */}
+        {/* Disable repeated submissions and show progress while registering */}
         <button
           type="submit"
           disabled={loader}
@@ -103,7 +120,7 @@ const RegisterPage = () => {
           {loader ? "Registering..." : "Register"}
         </button>
 
-        {/* Login Link */}
+        {/* Provide navigation to the login page for existing users */}
         <p className="text-center text-sm text-slate-600 mt-6">
           Already have an Account?{" "}
           <Link
