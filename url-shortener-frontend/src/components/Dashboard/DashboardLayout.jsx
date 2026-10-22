@@ -1,6 +1,5 @@
-
-import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import {
   FaChartLine,
   FaLink,
@@ -20,14 +19,14 @@ import MetricCard from "./MetricCard";
 import ShortUrlCard from "./ShortUrlCard";
 
 const DashboardLayout = () => {
-  // Access the shared QueryClient to invalidate cached data when needed.
+  // Access the shared QueryClient to manage cached server data.
   const queryClient = useQueryClient();
 
   // Store the search input and modal visibility.
   const [searchTerm, setSearchTerm] = useState("");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
-  // Define the last 30 days, including today.
+  // Define the last 30 days, including today, for click analytics.
   const startDate = getDateBefore(29);
   const endDate = getDateBefore(0);
 
@@ -36,28 +35,28 @@ const DashboardLayout = () => {
     data: shortUrls = [],
     isLoading: isUrlsLoading,
     isError: isUrlsError,
+    refetch: refetchUrls,
   } = useQuery({
-    // React Query uses this key to identify the URL list in its cache.
     queryKey: ["urls"],
     queryFn: getAllShortUrls,
   });
 
-  // Fetch and cache overall click analytics for the selected date range.
+  // Fetch and cache daily click totals for the selected date range.
   const {
     data: analyticsData = [],
     isLoading: isAnalyticsLoading,
     isError: isAnalyticsError,
+    refetch: refetchAnalytics,
   } = useQuery({
-    // Different date ranges have separate cached analytics.
     queryKey: ["dailyClicks", startDate, endDate],
     queryFn: () => getTotalClicksByDate(startDate, endDate),
   });
 
-  // Refresh dashboard data after a short URL is successfully created.
+  // Close the modal and refresh dashboard data after successful URL creation.
   const handleShortUrlCreated = async () => {
     setIsCreateModalOpen(false);
 
-    // Mark both queries stale and refetch them if they are active.
+    // Mark both queries stale so active queries can fetch updated data.
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ["urls"] }),
       queryClient.invalidateQueries({ queryKey: ["dailyClicks"] }),
@@ -66,22 +65,115 @@ const DashboardLayout = () => {
 
   // Filter URLs by their short URL or original destination URL.
   const search = searchTerm.toLowerCase();
+
   const filteredUrls = shortUrls.filter(
     (url) =>
       url.shortUrl.toLowerCase().includes(search) ||
-      url.originalUrl.toLowerCase().includes(search)
+      url.originalUrl.toLowerCase().includes(search),
   );
 
-  // Calculate total clicks across all URLs.
+  // Calculate total clicks across all short URLs.
   const totalClicks = shortUrls.reduce(
     (total, url) => total + (url.clickCount || 0),
-    0
+    0,
   );
 
-  // Calculate the average number of clicks per short URL.
+  // Calculate average clicks per URL, avoiding division by zero.
   const averageClicks = shortUrls.length
     ? Math.round(totalClicks / shortUrls.length)
     : 0;
+
+  // Determine the total short links metric value.
+  let totalShortLinksValue;
+
+  if (isUrlsError) {
+    totalShortLinksValue = "—";
+  } else if (isUrlsLoading) {
+    totalShortLinksValue = "...";
+  } else {
+    totalShortLinksValue = shortUrls.length;
+  }
+
+  // Determine the total clicks metric value.
+  let totalClicksValue;
+
+  if (isUrlsError) {
+    totalClicksValue = "—";
+  } else if (isUrlsLoading) {
+    totalClicksValue = "...";
+  } else {
+    totalClicksValue = totalClicks;
+  }
+
+  // Determine the average clicks metric value.
+  let averageClicksValue;
+
+  if (isUrlsError) {
+    averageClicksValue = "—";
+  } else if (isUrlsLoading) {
+    averageClicksValue = "...";
+  } else {
+    averageClicksValue = averageClicks;
+  }
+
+  // Determine what to display based on the analytics request state.
+  let analyticsContent;
+
+  if (isAnalyticsLoading) {
+    analyticsContent = (
+      <p className="py-10 text-center text-gray-500">Loading analytics...</p>
+    );
+  } else if (isAnalyticsError) {
+    analyticsContent = (
+      <div className="py-10 text-center">
+        <p className="text-red-500">Unable to load analytics.</p>
+
+        <button
+          type="button"
+          onClick={() => refetchAnalytics()}
+          className="mt-2 text-blue-600 hover:underline"
+        >
+          Try again
+        </button>
+      </div>
+    );
+  } else {
+    analyticsContent = <AnalyticsLineChart data={analyticsData} />;
+  }
+
+  // Determine what to display based on the URL list's request state.
+  let urlListContent;
+
+  if (isUrlsLoading) {
+    urlListContent = (
+      <p className="py-10 text-center text-gray-500">
+        Loading your short links...
+      </p>
+    );
+  } else if (isUrlsError) {
+    urlListContent = (
+      <div className="py-10 text-center">
+        <p className="text-red-500">Unable to load your short links.</p>
+
+        <button
+          type="button"
+          onClick={() => refetchUrls()}
+          className="mt-2 text-blue-600 hover:underline"
+        >
+          Try again
+        </button>
+      </div>
+    );
+  } else if (filteredUrls.length > 0) {
+    // Render a card for each URL matching the search term.
+    urlListContent = filteredUrls.map((url) => (
+      <ShortUrlCard key={url.id} url={url} />
+    ));
+  } else {
+    urlListContent = (
+      <p className="py-10 text-center text-gray-500">No short links found.</p>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-gray-50 px-3 py-8 sm:px-6 lg:px-10">
@@ -89,9 +181,7 @@ const DashboardLayout = () => {
         {/* Dashboard heading and create URL button. */}
         <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-800">
-              Dashboard
-            </h1>
+            <h1 className="text-3xl font-bold text-gray-800">Dashboard</h1>
             <p className="mt-1 text-gray-500">
               Manage your links and track their performance.
             </p>
@@ -113,7 +203,7 @@ const DashboardLayout = () => {
             iconBg="bg-blue-100"
             iconColor="text-blue-600"
             label="Total ShortLinks"
-            value={isUrlsLoading ? "..." : shortUrls.length}
+            value={totalShortLinksValue}
           />
 
           <MetricCard
@@ -121,7 +211,7 @@ const DashboardLayout = () => {
             iconBg="bg-green-100"
             iconColor="text-green-600"
             label="Total Clicks"
-            value={isUrlsLoading ? "..." : totalClicks}
+            value={totalClicksValue}
           />
 
           <MetricCard
@@ -129,24 +219,14 @@ const DashboardLayout = () => {
             iconBg="bg-purple-100"
             iconColor="text-purple-600"
             label="Avg. Clicks / Link"
-            value={isUrlsLoading ? "..." : averageClicks}
+            value={averageClicksValue}
           />
         </div>
 
-        {/* Line graph of overall daily clicks of all short urls. */}
+        {/* Display daily click analytics for the selected date range. */}
         <div className="mb-8">
           <AnalyticsCard title="Click Analytics">
-            {isAnalyticsLoading ? (
-              <p className="py-10 text-center text-gray-500">
-                Loading analytics...
-              </p>
-            ) : isAnalyticsError ? (
-              <p className="py-10 text-center text-red-500">
-                Unable to load analytics.
-              </p>
-            ) : (
-              <AnalyticsLineChart data={analyticsData} />
-            )}
+            {analyticsContent}
           </AnalyticsCard>
         </div>
 
@@ -171,25 +251,9 @@ const DashboardLayout = () => {
             </div>
           </div>
 
-          {/* Show the filtered URLs. */}
+          {/* Display loading, error, matching URLs, or the empty state. */}
           <div className="max-h-125 space-y-3 overflow-y-auto pr-1">
-            {isUrlsLoading ? (
-              <p className="py-10 text-center text-gray-500">
-                Loading your short links...
-              </p>
-            ) : isUrlsError ? (
-              <p className="py-10 text-center text-red-500">
-                Unable to load your short links.
-              </p>
-            ) : filteredUrls.length > 0 ? (
-              filteredUrls.map((url) => (
-                <ShortUrlCard key={url.id} url={url} />
-              ))
-            ) : (
-              <p className="py-10 text-center text-gray-500">
-                No short links found.
-              </p>
-            )}
+            {urlListContent}
           </div>
         </div>
       </div>
