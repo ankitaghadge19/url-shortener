@@ -1,12 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
-import {
-  FaChartLine,
-  FaLink,
-  FaMousePointer,
-  FaPlus,
-  FaSearch,
-} from "react-icons/fa";
+import { useCallback, useMemo, useState } from "react";
+import { FaChartLine, FaLink, FaMousePointer, FaPlus } from "react-icons/fa";
 
 import { getTotalClicksByDate } from "../../service/analyticsService";
 import { getAllShortUrls } from "../../service/urlService";
@@ -16,6 +10,7 @@ import AnalyticsCard from "./AnalyticsCard";
 import AnalyticsLineChart from "./AnalyticsLineChart";
 import CreateShortUrlModal from "./CreateShortUrlModal";
 import MetricCard from "./MetricCard";
+import SearchBar from "./SearchBar";
 import ShortUrlCard from "./ShortUrlCard";
 
 const DashboardLayout = () => {
@@ -52,8 +47,13 @@ const DashboardLayout = () => {
     queryFn: () => getTotalClicksByDate(startDate, endDate),
   });
 
+  // Keep the search handler reference stable between renders.
+  const handleSearch = useCallback((value) => {
+    setSearchTerm(value);
+  }, []);
+
   // Close the modal and refresh dashboard data after successful URL creation.
-  const handleShortUrlCreated = async () => {
+  const handleShortUrlCreated = useCallback(async () => {
     setIsCreateModalOpen(false);
 
     // Mark both queries stale so active queries can fetch updated data.
@@ -61,27 +61,30 @@ const DashboardLayout = () => {
       queryClient.invalidateQueries({ queryKey: ["urls"] }),
       queryClient.invalidateQueries({ queryKey: ["dailyClicks"] }),
     ]);
-  };
+  }, [queryClient]);
 
-  // Filter URLs by their short URL or original destination URL.
-  const search = searchTerm.toLowerCase();
+  // Filter URLs only when the URLs array or search term changes.
+  const filteredUrls = useMemo(() => {
+    const search = searchTerm.toLowerCase();
 
-  const filteredUrls = shortUrls.filter(
-    (url) =>
-      url.shortUrl.toLowerCase().includes(search) ||
-      url.originalUrl.toLowerCase().includes(search),
-  );
+    return shortUrls.filter(
+      (url) =>
+        url.shortUrl.toLowerCase().includes(search) ||
+        url.originalUrl.toLowerCase().includes(search),
+    );
+  }, [shortUrls, searchTerm]);
 
-  // Calculate total clicks across all short URLs.
-  const totalClicks = shortUrls.reduce(
-    (total, url) => total + (url.clickCount || 0),
-    0,
+  // Calculate total clicks when the URL data changes.
+  const totalClicks = useMemo(
+    () => shortUrls.reduce((total, url) => total + (url.clickCount || 0), 0),
+    [shortUrls],
   );
 
   // Calculate average clicks per URL, avoiding division by zero.
-  const averageClicks = shortUrls.length
-    ? Math.round(totalClicks / shortUrls.length)
-    : 0;
+  const averageClicks = useMemo(
+    () => (shortUrls.length ? Math.round(totalClicks / shortUrls.length) : 0),
+    [shortUrls.length, totalClicks],
+  );
 
   // Determine the total short links metric value.
   let totalShortLinksValue;
@@ -182,12 +185,14 @@ const DashboardLayout = () => {
         <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-800">Dashboard</h1>
+
             <p className="mt-1 text-gray-500">
               Manage your links and track their performance.
             </p>
           </div>
 
           <button
+            type="button"
             onClick={() => setIsCreateModalOpen(true)}
             className="flex items-center justify-center gap-2 rounded-lg bg-custom-gradient px-4 py-3 font-medium text-white transition hover:opacity-90"
           >
@@ -237,18 +242,7 @@ const DashboardLayout = () => {
               Your Short Links
             </h2>
 
-            {/* Update the search term as the user types. */}
-            <div className="relative w-full md:w-80">
-              <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-
-              <input
-                type="text"
-                placeholder="Search your links..."
-                value={searchTerm}
-                onChange={(event) => setSearchTerm(event.target.value)}
-                className="w-full rounded-lg border border-gray-200 bg-white py-2.5 pl-10 pr-3 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
-              />
-            </div>
+            <SearchBar searchTerm={searchTerm} onSearch={handleSearch} />
           </div>
 
           {/* Display loading, error, matching URLs, or the empty state. */}
