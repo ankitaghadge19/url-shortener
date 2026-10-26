@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { memo, useState } from "react";
 import toast from "react-hot-toast";
 import {
   FaCopy,
@@ -10,7 +10,7 @@ import { FaChartBar } from "react-icons/fa6";
 import { useNavigate } from "react-router-dom";
 import { getShortUrl } from "../../utils/urlUtils";
 
-const ShortUrlCard = ({ url }) => {
+const ShortUrlCard = memo(function ShortUrlCard({ url }) {
   // Track whether the short URL has been copied to provide button feedback.
   const [copied, setCopied] = useState(false);
 
@@ -143,6 +143,6 @@ const ShortUrlCard = ({ url }) => {
       </div>
     </div>
   );
-};
+});
 
 export default ShortUrlCard;
