@@ -10,5 +10,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class JwtAuthenticationResponse {
+
+    // Holds the JWT when the API returns it in the response body.
     private String token;
 }
