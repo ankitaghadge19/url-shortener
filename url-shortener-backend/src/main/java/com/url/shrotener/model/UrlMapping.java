@@ -16,20 +16,30 @@ import java.util.List;
 @AllArgsConstructor
 @Table(name = "url_mapping")
 public class UrlMapping {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(nullable = false, length = 2048)
     private String originalUrl;
+
+    @Column(nullable = false, unique = true)
     private String shortUrl;
-    private int clickCount = 0; // Increment when short URL is clicked
+
+    // Stores the number of times this shortened URL has been clicked.
+    @Column(nullable = false)
+    private int clickCount = 0;
+
+    @Column(nullable = false)
     private LocalDateTime createdAt;
 
+    // Each URL mapping belongs to one user.
     @ManyToOne
-    @JoinColumn(name = "user_id") // Foreign key
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    // Optional: Not required for the database relationship.
-    // Added only to access all click events for a URL using urlMapping.getClickEvents().
+    // Allows access to all click events associated with this URL.
     @OneToMany(mappedBy = "urlMapping")
     private List<ClickEvent> clickEvents;
 }

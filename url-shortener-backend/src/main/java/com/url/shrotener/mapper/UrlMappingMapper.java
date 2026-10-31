@@ -1,3 +1,4 @@
+
 package com.url.shrotener.mapper;
 
 import com.url.shrotener.dto.UrlMappingDto;
@@ -8,6 +9,7 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface UrlMappingMapper {
 
+    // Maps UrlMapping entity fields to UrlMappingDto, including the owner's username.
     @Mapping(source = "user.username", target = "username")
     UrlMappingDto convertToDto(UrlMapping urlMapping);
 }

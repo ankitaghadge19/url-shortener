@@ -10,7 +10,13 @@ import java.util.Optional;
 
 @Repository
 public interface UrlMappingRepository extends JpaRepository<UrlMapping, Long> {
-    UrlMapping findByShortUrl(String shortUrl);
+
+    // Finds a URL mapping by its short URL.
+    Optional<UrlMapping> findByShortUrl(String shortUrl);
+
+    // Retrieves all URL mappings created by a specific user.
     List<UrlMapping> findByUser(User user);
+
+    // Finds a URL mapping only if it belongs to the given user.
     Optional<UrlMapping> findByIdAndUser(Long id, User user);
 }

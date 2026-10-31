@@ -3,7 +3,7 @@ package com.url.shrotener.controller;
 import com.url.shrotener.dto.UserResponse;
 import com.url.shrotener.model.User;
 import com.url.shrotener.service.UserService;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,10 +14,12 @@ import java.security.Principal;
 
 @RestController
 @RequestMapping("/api/users")
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class UserController {
-    private UserService userService;
 
+    private final UserService userService;
+
+    // Returns the details of the currently authenticated user.
     @GetMapping("/me")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<UserResponse> getCurrentUser(Principal principal){
