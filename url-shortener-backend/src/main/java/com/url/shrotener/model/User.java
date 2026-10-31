@@ -15,16 +15,24 @@ import java.util.List;
 @AllArgsConstructor
 @Table(name = "user")
 public class User {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String email;
-    private String username;
-    private String password;
-    private String role = "USER";
 
-    // Optional: Not required for the database relationship.
-    // Added only to access all URLs created by a user using user.getUrlMappings().
+    @Column(nullable = false, unique = true)
+    private String email;
+
+    @Column(nullable = false, unique = true)
+    private String username;
+
+    @Column(nullable = false)
+    private String password;
+
+    // Default role for newly created users.
+    private String role = "ROLE_USER";
+
+    // Allows access to all URL mappings created by this user.
     @OneToMany(mappedBy = "user")
     private List<UrlMapping> urlMappings;
 }
